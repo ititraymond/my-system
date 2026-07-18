@@ -8,18 +8,15 @@ const router = Router()
 // ── Register ──
 router.post('/register', async (req, res) => {
   const { username, email, password } = req.body
-  if (!username || !email || !password) {
-    return res.status(400).json({ error: 'Missing fields' })
-  }
+  if (!username || !email || !password) return res.status(400).json({ error: 'Missing fields' })
   try {
     const hash = await bcrypt.hash(password, 10)
-    const [user] = await db('users').insert({ username, email, password_hash: hash }).returning('*')
+    const [id] = await db('users').insert({ username, email, password_hash: hash }).returning('id')
+    const user = await db('users').where({ id }).first()
     const token = generateToken(user)
-    res.status(201).json({ token, user: { id: user.id, username: user.username, email: user.email } })
+    res.status(201).json({ token, user: cleanUser(user) })
   } catch (err) {
-    if (err.message.includes('UNIQUE')) {
-      return res.status(409).json({ error: 'Username or email already taken' })
-    }
+    if (err.message.includes('UNIQUE')) return res.status(409).json({ error: 'Username or email already taken' })
     res.status(500).json({ error: 'Server error' })
   }
 })
@@ -27,24 +24,52 @@ router.post('/register', async (req, res) => {
 // ── Login ──
 router.post('/login', async (req, res) => {
   const { username, password } = req.body
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Missing fields' })
-  }
+  if (!username || !password) return res.status(400).json({ error: 'Missing fields' })
   const user = await db('users').where({ username }).first()
   if (!user) return res.status(401).json({ error: 'Invalid credentials' })
-
   const valid = await bcrypt.compare(password, user.password_hash)
   if (!valid) return res.status(401).json({ error: 'Invalid credentials' })
 
+  if (user.must_change_password) {
+    // Issue a temporary token only valid for password change
+    const tempToken = generateToken(user, '5m')
+    return res.json({ must_change_password: true, tempToken, message: '首次登入，請更改密碼' })
+  }
+
   const token = generateToken(user)
-  res.json({ token, user: { id: user.id, username: user.username, email: user.email } })
+  res.json({ token, user: cleanUser(user) })
+})
+
+// ── Change Password (first-time) ──
+router.post('/change-password', authMiddleware, async (req, res) => {
+  const { currentPassword, newPassword } = req.body
+  if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: '新密碼至少6個字元' })
+
+  const user = await db('users').where({ id: req.user.id }).first()
+  if (!user) return res.status(404).json({ error: 'User not found' })
+
+  // If not must_change_password, verify current password
+  if (!user.must_change_password) {
+    if (!currentPassword) return res.status(400).json({ error: '請輸入目前密碼' })
+    const valid = await bcrypt.compare(currentPassword, user.password_hash)
+    if (!valid) return res.status(401).json({ error: '目前密碼錯誤' })
+  }
+
+  const hash = await bcrypt.hash(newPassword, 10)
+  await db('users').where({ id: user.id }).update({ password_hash: hash, must_change_password: false })
+  const token = generateToken(user)
+  res.json({ token, user: cleanUser({ ...user, must_change_password: false }), message: '密碼已更改 ✅' })
 })
 
 // ── Me (protected) ──
 router.get('/me', authMiddleware, async (req, res) => {
   const user = await db('users').where({ id: req.user.id }).first()
   if (!user) return res.status(404).json({ error: 'User not found' })
-  res.json({ id: user.id, username: user.username, email: user.email })
+  res.json(cleanUser(user))
 })
+
+function cleanUser(u) {
+  return { id: u.id, username: u.username, email: u.email, must_change_password: !!u.must_change_password }
+}
 
 export default router

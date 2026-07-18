@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useAuth } from '../AuthContext'
-import { Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+import { api } from '../api'
 
 export default function Login() {
-  const { login } = useAuth()
+  const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -12,7 +12,14 @@ export default function Login() {
     e.preventDefault()
     setError('')
     try {
-      await login(username, password)
+      const data = await api.login({ username, password })
+      if (data.must_change_password) {
+        localStorage.setItem('tempToken', data.tempToken)
+        navigate('/change-password')
+      } else {
+        localStorage.setItem('token', data.token)
+        window.location.href = '/dashboard'
+      }
     } catch (err) {
       setError(err.message)
     }
