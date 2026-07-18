@@ -1,7 +1,9 @@
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 
 export default function Dashboard() {
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
 
   return (
     <div className="dashboard">
@@ -26,10 +28,10 @@ export default function Dashboard() {
             <h3>筆記</h3>
             <p>即將推出</p>
           </div>
-          <div className="dash-card">
+          <div className="dash-card clickable" onClick={() => navigate('/settings')}>
             <div className="icon">⚙️</div>
             <h3>設定</h3>
-            <p>即將推出</p>
+            <p>帳戶管理</p>
           </div>
         </div>
       </main>

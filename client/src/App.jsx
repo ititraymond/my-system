@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './AuthContext'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
+import Settings from './pages/Settings'
 import ChangePassword from './pages/ChangePassword'
 
 function ProtectedRoute({ children }) {
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
           <Route path="/change-password" element={<ChangePassword />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>
       </AuthProvider>
