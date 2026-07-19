@@ -15,7 +15,7 @@ export default function Logs() {
 
   useEffect(() => {
     const token = localStorage.getItem('token')
-    fetch(`${API}/logs`, { headers: { Authorization: *** ${token}` } })
+    fetch(`${API}/logs`, { headers: { Authorization: 'Bearer ' + token } })
       .then(r => r.json())
       .then(data => { setLogs(data); setLoading(false) })
       .catch(() => setLoading(false))
