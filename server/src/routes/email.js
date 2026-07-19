@@ -1,16 +1,24 @@
 import { Router } from 'express'
+import multer from 'multer'
 import { authMiddleware } from '../auth.js'
 import { sendEmail } from '../email.js'
 import db from '../db.js'
 
+const upload = multer({ storage: multer.memoryStorage(), limits: { files: 5, fileSize: 5 * 1024 * 1024 } })
+
 const router = Router()
 
-router.post('/test', authMiddleware, async (req, res) => {
+router.post('/test', authMiddleware, upload.array('files', 5), async (req, res) => {
   const { to, subject, body } = req.body
   if (!to || !subject || !body) {
     return res.status(400).json({ error: 'Missing fields: to, subject, body' })
   }
   try {
+    const attachments = (req.files || []).map(f => ({
+      filename: f.originalname,
+      content: f.buffer.toString('base64'),
+    }))
+
     const result = await sendEmail({
       to, subject,
       html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
@@ -19,6 +27,7 @@ router.post('/test', authMiddleware, async (req, res) => {
         <hr style="border-color:#eee;margin:24px 0">
         <p style="color:#999;font-size:12px">由 System A 透過 Resend 發送</p>
       </div>`,
+      attachments,
       userId: req.user.id,
     })
     res.json({ success: true, messageId: result.messageId })
