@@ -16,6 +16,7 @@ const DATA_WIPE_KEY = process.env.removeAllData1234
 // ── Safety check: only wipe data if exact key matches ──
 if (DATA_WIPE_KEY === 'Abcd!@#$1234') {
   console.log('⚠️  WIPE KEY MATCHED — dropping all tables...')
+  await db.schema.dropTableIfExists('email_logs')
   await db.schema.dropTableIfExists('sessions')
   await db.schema.dropTableIfExists('logs')
   await db.schema.dropTableIfExists('users')
@@ -68,6 +69,19 @@ if (!hasSessions) {
     t.timestamp('logout_at').nullable()
   })
   console.log('✅ Sessions table created')
+}
+
+// ── Email logs table ──
+if (!await db.schema.hasTable('email_logs')) {
+  await db.schema.createTable('email_logs', t => {
+    t.increments('id').primary()
+    t.integer('user_id').references('id').inTable('users').notNullable()
+    t.string('to').notNullable()
+    t.string('subject').notNullable()
+    t.string('message_id').nullable()
+    t.timestamp('sent_at').defaultTo(db.fn.now())
+  })
+  console.log('✅ Email logs table created')
 }
 
 // ── Log helper ──
