@@ -36,7 +36,8 @@ export function AuthProvider({ children }) {
       const authHeader = 'B' + 'earer ' + token
       await fetch(`${import.meta.env.PROD ? '/api' : 'http://localhost:3001/api'}/auth/logout`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: authHeader *** })
+        headers: { 'Content-Type': 'application/json', Authorization: authHeader }
+      })
     } catch {}
     localStorage.removeItem('token')
     setUser(null)
