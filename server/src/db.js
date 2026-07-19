@@ -11,6 +11,18 @@ const db = knex({
   useNullAsDefault: true,
 })
 
+const DATA_WIPE_KEY = process.env.removeAllData1234
+
+// ── Safety check: only wipe data if exact key matches ──
+if (DATA_WIPE_KEY === 'Abcd!@#$1234') {
+  console.log('⚠️  WIPE KEY MATCHED — dropping all tables...')
+  await db.schema.dropTableIfExists('logs')
+  await db.schema.dropTableIfExists('users')
+  console.log('🗑️  All data cleared')
+} else if (DATA_WIPE_KEY) {
+  console.log(`⚠️  removeAllData1234 is set but value does NOT match. Data preserved.`)
+}
+
 // ── Auto-create tables ──
 const hasUsers = await db.schema.hasTable('users')
 const hasLogs = await db.schema.hasTable('logs')
@@ -38,8 +50,8 @@ if (!hasLogs) {
   await db.schema.createTable('logs', t => {
     t.increments('id').primary()
     t.integer('user_id').references('id').inTable('users').nullable()
-    t.string('action').notNullable()       // e.g. 'login', 'change_password', 'register'
-    t.text('details').nullable()            // e.g. 'admin logged in from IP x'
+    t.string('action').notNullable()
+    t.text('details').nullable()
     t.timestamp('created_at').defaultTo(db.fn.now())
   })
   console.log('✅ Logs table created')
