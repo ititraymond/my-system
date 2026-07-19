@@ -13,10 +13,10 @@ export default function Dashboard() {
       </header>
       <main className="dashboard-main">
         <div className="card-grid">
-          <div className="dash-card">
+          <div className="dash-card clickable" onClick={() => navigate('/logs')}>
             <div className="icon">📋</div>
-            <h3>任務管理</h3>
-            <p>即將推出</p>
+            <h3>活動記錄</h3>
+            <p>系統操作記錄</p>
           </div>
           <div className="dash-card">
             <div className="icon">📊</div>

@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
-import db from '../db.js'
+import db, { logAction } from '../db.js'
 import { generateToken, authMiddleware } from '../auth.js'
 
 const router = Router()
@@ -13,6 +13,7 @@ router.post('/register', async (req, res) => {
     const hash = await bcrypt.hash(password, 10)
     const [id] = await db('users').insert({ username, email, password_hash: hash }).returning('id')
     const user = await db('users').where({ id }).first()
+    await logAction(id, 'register', `${username} 註冊了新帳戶`)
     const token = generateToken(user)
     res.status(201).json({ token, user: cleanUser(user) })
   } catch (err) {
@@ -28,19 +29,22 @@ router.post('/login', async (req, res) => {
   const user = await db('users').where({ username }).first()
   if (!user) return res.status(401).json({ error: 'Invalid credentials' })
   const valid = await bcrypt.compare(password, user.password_hash)
-  if (!valid) return res.status(401).json({ error: 'Invalid credentials' })
+  if (!valid) {
+    await logAction(user.id, 'login_failed', `${username} 登入失敗`)
+    return res.status(401).json({ error: 'Invalid credentials' })
+  }
 
   if (user.must_change_password) {
-    // Issue a temporary token only valid for password change
     const tempToken = generateToken(user, '5m')
     return res.json({ must_change_password: true, tempToken, message: '首次登入，請更改密碼' })
   }
 
+  await logAction(user.id, 'login', `${username} 登入了系統`)
   const token = generateToken(user)
   res.json({ token, user: cleanUser(user) })
 })
 
-// ── Change Password (first-time) ──
+// ── Change Password ──
 router.post('/change-password', authMiddleware, async (req, res) => {
   const { currentPassword, newPassword } = req.body
   if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: '新密碼至少6個字元' })
@@ -48,7 +52,6 @@ router.post('/change-password', authMiddleware, async (req, res) => {
   const user = await db('users').where({ id: req.user.id }).first()
   if (!user) return res.status(404).json({ error: 'User not found' })
 
-  // If not must_change_password, verify current password
   if (!user.must_change_password) {
     if (!currentPassword) return res.status(400).json({ error: '請輸入目前密碼' })
     const valid = await bcrypt.compare(currentPassword, user.password_hash)
@@ -57,6 +60,7 @@ router.post('/change-password', authMiddleware, async (req, res) => {
 
   const hash = await bcrypt.hash(newPassword, 10)
   await db('users').where({ id: user.id }).update({ password_hash: hash, must_change_password: false })
+  await logAction(user.id, 'change_password', `${user.username} 更改了密碼`)
   const token = generateToken(user)
   res.json({ token, user: cleanUser({ ...user, must_change_password: false }), message: '密碼已更改 ✅' })
 })

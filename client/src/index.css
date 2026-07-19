@@ -105,3 +105,24 @@ body {
 .dash-card .icon { font-size: 2.4rem; margin-bottom: 12px; }
 .dash-card h3 { font-size: 1rem; margin-bottom: 6px; }
 .dash-card p { color: #666; font-size: 0.85rem; }
+
+/* ── Logs ── */
+.log-list { display: flex; flex-direction: column; gap: 2px; }
+
+.log-item {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.log-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 2px; }
+
+.log-body {
+  display: flex; flex-direction: column; gap: 4px;
+  flex: 1; min-width: 0;
+}
+
+.log-details { color: #ccc; font-size: 0.9rem; }
+.log-time { color: #555; font-size: 0.75rem; }
