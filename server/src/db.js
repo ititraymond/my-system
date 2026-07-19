@@ -16,6 +16,7 @@ const DATA_WIPE_KEY = process.env.removeAllData1234
 // ── Safety check: only wipe data if exact key matches ──
 if (DATA_WIPE_KEY === 'Abcd!@#$1234') {
   console.log('⚠️  WIPE KEY MATCHED — dropping all tables...')
+  await db.schema.dropTableIfExists('sessions')
   await db.schema.dropTableIfExists('logs')
   await db.schema.dropTableIfExists('users')
   console.log('🗑️  All data cleared')
@@ -55,6 +56,18 @@ if (!hasLogs) {
     t.timestamp('created_at').defaultTo(db.fn.now())
   })
   console.log('✅ Logs table created')
+}
+
+// ── Sessions table ──
+const hasSessions = await db.schema.hasTable('sessions')
+if (!hasSessions) {
+  await db.schema.createTable('sessions', t => {
+    t.increments('id').primary()
+    t.integer('user_id').references('id').inTable('users').notNullable()
+    t.timestamp('login_at').notNullable()
+    t.timestamp('logout_at').nullable()
+  })
+  console.log('✅ Sessions table created')
 }
 
 // ── Log helper ──

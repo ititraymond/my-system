@@ -40,7 +40,9 @@ router.post('/login', async (req, res) => {
   }
 
   await logAction(user.id, 'login', `${username} 登入了系統`)
-  const token = generateToken(user)
+  // Track session
+  const [sessionId] = await db('sessions').insert({ user_id: user.id, login_at: db.fn.now() }).returning('id')
+  const token = generateToken({ ...user, sessionId })
   res.json({ token, user: cleanUser(user) })
 })
 
@@ -70,6 +72,16 @@ router.get('/me', authMiddleware, async (req, res) => {
   const user = await db('users').where({ id: req.user.id }).first()
   if (!user) return res.status(404).json({ error: 'User not found' })
   res.json(cleanUser(user))
+})
+
+// ── Logout ──
+router.post('/logout', authMiddleware, async (req, res) => {
+  const sessionId = req.user.sessionId
+  if (sessionId) {
+    await db('sessions').where({ id: sessionId }).update({ logout_at: db.fn.now() })
+  }
+  await logAction(req.user.id, 'logout', `${req.user.username} 登出了系統`)
+  res.json({ success: true })
 })
 
 function cleanUser(u) {

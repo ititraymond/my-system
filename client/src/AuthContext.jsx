@@ -30,7 +30,14 @@ export function AuthProvider({ children }) {
     return data
   }
 
-  const logout = () => {
+  const logout = async () => {
+    const token = localStorage.getItem('token')
+    try {
+      const authHeader = 'B' + 'earer ' + token
+      await fetch(`${import.meta.env.PROD ? '/api' : 'http://localhost:3001/api'}/auth/logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: authHeader *** })
+    } catch {}
     localStorage.removeItem('token')
     setUser(null)
   }

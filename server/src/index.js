@@ -6,6 +6,7 @@ import dotenv from 'dotenv'
 import authRoutes from './routes/auth.js'
 import logRoutes from './routes/logs.js'
 import emailRoutes from './routes/email.js'
+import reportRoutes from './routes/reports.js'
 
 dotenv.config()
 
@@ -20,6 +21,7 @@ app.use(express.json())
 app.use('/api/auth', authRoutes)
 app.use('/api/logs', logRoutes)
 app.use('/api/email', emailRoutes)
+app.use('/api/reports', reportRoutes)
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
 
 // Serve React build in production

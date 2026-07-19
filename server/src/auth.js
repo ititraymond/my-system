@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken'
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production-⚡'
 
 export function generateToken(user, expiresIn = '7d') {
-  return jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn })
+  return jwt.sign({ id: user.id, username: user.username, sessionId: user.sessionId }, JWT_SECRET, { expiresIn })
 }
 
 export function authMiddleware(req, res, next) {

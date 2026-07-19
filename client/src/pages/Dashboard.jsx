@@ -18,10 +18,10 @@ export default function Dashboard() {
             <h3>活動記錄</h3>
             <p>系統操作記錄</p>
           </div>
-          <div className="dash-card">
+          <div className="dash-card clickable" onClick={() => navigate('/reports')}>
             <div className="icon">📊</div>
             <h3>統計報表</h3>
-            <p>即將推出</p>
+            <p>登入時長分析</p>
           </div>
           <div className="dash-card">
             <div className="icon">📝</div>
