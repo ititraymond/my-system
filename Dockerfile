@@ -17,7 +17,6 @@ COPY server/ server/
 
 # Data directory for SQLite
 RUN mkdir -p /app/data
-VOLUME ["/app/data"]
 
 ENV NODE_ENV=production
 ENV PORT=3001
